@@ -1,0 +1,6 @@
+{
+  "name": "PDF Course Hub & Analytics Dashboard",
+  "description": "Interactive PDF course catalog with drag-and-drop admin reordering, real-time analytics tracking, and built-in document viewer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
