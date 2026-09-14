@@ -363,22 +363,24 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-100/70 flex flex-col font-sans text-slate-900 antialiased selection:bg-emerald-600 selection:text-white">
       
-      {/* Top Navigation */}
-      <Navbar
-        currentRole={role}
-        onRoleChange={handleRoleChange}
-        totalPdfs={userPdfs.length}
-        totalViews={detailedAnalytics?.totalViews ?? analytics.reduce((a, b) => a + b.totalViews, 0)}
-        onOpenAddModal={() => {
-          setEditingPdf(null);
-          setIsAddEditModalOpen(true);
-        }}
-        onResetSeed={handleResetSeed}
-        isResetting={isResetting}
-        currentUser={currentUser}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onOpenShareModal={() => setIsShareModalOpen(true)}
-      />
+      {/* Top Navigation for Admin */}
+      {role === 'admin' && (
+        <Navbar
+          currentRole={role}
+          onRoleChange={handleRoleChange}
+          totalPdfs={userPdfs.length}
+          totalViews={detailedAnalytics?.totalViews ?? analytics.reduce((a, b) => a + b.totalViews, 0)}
+          onOpenAddModal={() => {
+            setEditingPdf(null);
+            setIsAddEditModalOpen(true);
+          }}
+          onResetSeed={handleResetSeed}
+          isResetting={isResetting}
+          currentUser={currentUser}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onOpenShareModal={() => setIsShareModalOpen(true)}
+        />
+      )}
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -388,7 +390,6 @@ export default function App() {
             isLoading={isLoading}
             onReadPDF={handleReadPDF}
             onRefresh={fetchData}
-            onSwitchToAdmin={() => handleRoleChange('admin')}
             currentUser={currentUser}
             unlockedPdfIds={unlockedPdfIds}
             userOrders={userOrders}

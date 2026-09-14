@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { db } from '../server/store';
+import { db } from '../store';
 
 // Extend Express Request type to include user
 export interface AuthenticatedRequest extends Request {

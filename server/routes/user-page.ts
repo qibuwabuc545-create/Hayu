@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router, Request, Response } from 'express';
 import { db } from '../store';
 import { verifyShareableLink } from '../middleware/link-auth';
 
@@ -6,9 +6,6 @@ const router = Router();
 
 interface LinkRequest extends Request {
   shareableLink?: any;
-  params: {
-    linkId: string;
-  };
 }
 
 /**

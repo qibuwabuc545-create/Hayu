@@ -52,7 +52,7 @@ router.get('/dashboard', verifyAdminToken, requireAdmin, (req, res) => {
       totalPDFs: db.countPDFs(),
       totalOrders: db.getAllOrders().length,
       pendingOrders: db.getAllOrders().filter((o: any) => o.status === 'pending').length,
-      totalViews: db.getAggregatedAnalytics().totalViews,
+      totalViews: db.getDetailedAnalytics().totalViews,
       recentOrders: db.getAllOrders().slice(-10)
     };
 

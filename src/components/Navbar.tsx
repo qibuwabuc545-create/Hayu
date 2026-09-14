@@ -182,24 +182,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     type="button"
                     onClick={onOpenShareModal}
-                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors"
                     title="Share this web portal link"
                   >
                     <Share2 className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Share Portal</span>
                   </button>
                 )}
-
-                {/* Switch to Admin Studio */}
-                <button
-                  type="button"
-                  onClick={() => onRoleChange('admin')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all"
-                  title="Switch to Admin Dashboard"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Admin Studio</span>
-                </button>
               </>
             )}
 

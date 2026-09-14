@@ -917,6 +917,75 @@ class DatabaseStore {
       totalDocuments: this.pdfs.length
     };
   }
+
+  // --- Admin & Shareable Links Support ---
+  public shareableLinks: any[] = [];
+
+  public getAdminById(adminId: string) {
+    if (adminId === 'admin_master') {
+      return { id: 'admin_master', email: 'admin@thebookshub.edu', name: 'Master Administrator', role: 'super_admin' };
+    }
+    const user = this.getUserById(adminId);
+    if (user) {
+      return { id: user.id, email: user.email, name: user.name, role: 'admin' };
+    }
+    return { id: adminId, email: 'admin@thebookshub.edu', name: 'Academic Admin', role: 'admin' };
+  }
+
+  public authenticateAdmin(email: string, _password: string) {
+    if (email) {
+      return {
+        id: 'admin_master',
+        email: email,
+        name: 'Curriculum Administrator',
+        role: 'super_admin' as const
+      };
+    }
+    return null;
+  }
+
+  public createShareableLink(link: any) {
+    this.shareableLinks.push(link);
+    this.saveData();
+    return link;
+  }
+
+  public getAllShareableLinks() {
+    return this.shareableLinks;
+  }
+
+  public getShareableLinksByUserId(userId: string) {
+    return this.shareableLinks.filter(l => l.userId === userId);
+  }
+
+  public deactivateShareableLink(linkId: string) {
+    const link = this.shareableLinks.find(l => l.id === linkId || l.token === linkId);
+    if (link) {
+      link.isActive = false;
+      this.saveData();
+      return link;
+    }
+    return null;
+  }
+
+  public deleteShareableLink(linkId: string) {
+    const idx = this.shareableLinks.findIndex(l => l.id === linkId || l.token === linkId);
+    if (idx !== -1) {
+      this.shareableLinks.splice(idx, 1);
+      this.saveData();
+      return true;
+    }
+    return false;
+  }
+
+  public recordShareableLinkAccess(linkId: string) {
+    const link = this.shareableLinks.find(l => l.id === linkId || l.token === linkId);
+    if (link) {
+      link.accessCount = (link.accessCount || 0) + 1;
+      link.lastAccessedAt = new Date().toISOString();
+      this.saveData();
+    }
+  }
 }
 
 export const db = new DatabaseStore();

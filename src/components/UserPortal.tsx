@@ -36,7 +36,6 @@ interface UserPortalProps {
   isLoading: boolean;
   onReadPDF: (pdf: PDFPost) => void;
   onRefresh: () => void;
-  onSwitchToAdmin?: () => void;
   currentUser?: UserProfile | null;
   unlockedPdfIds?: string[];
   userOrders?: PaymentOrder[];
@@ -49,7 +48,6 @@ export const UserPortal: React.FC<UserPortalProps> = ({
   isLoading,
   onReadPDF,
   onRefresh,
-  onSwitchToAdmin,
   currentUser = null,
   unlockedPdfIds = [],
   userOrders = [],
@@ -547,19 +545,6 @@ export const UserPortal: React.FC<UserPortalProps> = ({
 
             {/* Right Profile & Setting Shortcut */}
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* Admin Studio switch button */}
-              {onSwitchToAdmin && (
-                <button
-                  type="button"
-                  onClick={onSwitchToAdmin}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold shadow-sm transition-all border border-slate-700"
-                  title="Return to Admin Dashboard"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline">Admin Dashboard</span>
-                </button>
-              )}
-
               {/* Settings shortcut button */}
               <button
                 onClick={() => setActiveNav('setting')}
