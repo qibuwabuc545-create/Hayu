@@ -113,5 +113,5 @@ export interface DetailedAnalytics {
 }
 
 export type UserRole = 'user' | 'admin';
-export type AdminTab = 'reorder' | 'analytics' | 'payments' | 'payment-settings' | 'api-docs';
+export type AdminTab = 'reorder' | 'links' | 'analytics' | 'payments' | 'payment-settings' | 'api-docs';
 export type UserNavTab = 'discover' | 'library' | 'download' | 'favorite' | 'purchases';

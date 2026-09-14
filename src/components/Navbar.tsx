@@ -1,6 +1,19 @@
-import React from 'react';
-import { BookOpen, ShieldCheck, User, BarChart3, Plus, RefreshCw, Layers, LogIn, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  BookOpen,
+  ShieldCheck,
+  BarChart3,
+  Plus,
+  RefreshCw,
+  LogIn,
+  Link as LinkIcon,
+  ExternalLink,
+  Copy,
+  Check,
+  Share2
+} from 'lucide-react';
 import { UserRole, UserProfile } from '../types';
+import { getStudentPortalUrl } from './StudentLinkGeneratorModal';
 
 interface NavbarProps {
   currentRole: UserRole;
@@ -12,6 +25,7 @@ interface NavbarProps {
   isResetting: boolean;
   currentUser?: UserProfile | null;
   onOpenAuthModal?: () => void;
+  onOpenShareModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -23,8 +37,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   onResetSeed,
   isResetting,
   currentUser,
-  onOpenAuthModal
+  onOpenAuthModal,
+  onOpenShareModal
 }) => {
+  const [copiedLink, setCopiedLink] = useState(false);
+  const studentPortalUrl = typeof window !== 'undefined' ? getStudentPortalUrl() : '';
+
+  const handleCopyStudentLink = () => {
+    navigator.clipboard.writeText(studentPortalUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,110 +64,144 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-bold text-slate-900 tracking-tight text-lg">
                   The Books Hub
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/60 font-mono">
-                  Gated Catalog &amp; Pay
-                </span>
+                {currentRole === 'admin' ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-slate-900 text-amber-300 border border-slate-800 font-mono">
+                    Admin Studio
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80 font-mono">
+                    User Web Portal
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">
-                Academic reading portal, instant full-page reader &amp; payment release system
+                {currentRole === 'admin'
+                  ? 'Academic Curriculum Administration, Monetization & Web Portal Link Generator'
+                  : 'Public Academic Library, Syllabus Reader & Instant Document Checkout'}
               </p>
             </div>
           </div>
 
-          {/* Center Stats */}
-          <div className="hidden md:flex items-center gap-6 text-xs text-slate-600 border-x border-slate-200 px-6">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-semibold text-slate-800">{totalPdfs}</span>
-              <span className="text-slate-500">Documents</span>
+          {/* Center Stats (Admin only) */}
+          {currentRole === 'admin' && (
+            <div className="hidden md:flex items-center gap-6 text-xs text-slate-600 border-x border-slate-200 px-6">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="font-semibold text-slate-800">{totalPdfs}</span>
+                <span className="text-slate-500">Documents</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-3.5 h-3.5 text-blue-500" />
+                <span className="font-semibold text-slate-800">{totalViews}</span>
+                <span className="text-slate-500">Tracked Views</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-3.5 h-3.5 text-blue-500" />
-              <span className="font-semibold text-slate-800">{totalViews}</span>
-              <span className="text-slate-500">Tracked Views</span>
-            </div>
-          </div>
+          )}
 
-          {/* Right Role Toggle & Account Actions */}
+          {/* Right Header Actions */}
           <div className="flex items-center gap-2.5">
             
-            {/* Student Auth Button */}
-            {onOpenAuthModal && (
-              <button
-                id="btn-nav-auth"
-                onClick={onOpenAuthModal}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-800 transition-all"
-              >
-                {currentUser ? (
-                  <>
-                    <img
-                      src={currentUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(currentUser.name)}`}
-                      alt=""
-                      className="w-5 h-5 rounded-full object-cover"
-                    />
-                    <span className="hidden sm:inline truncate max-w-[100px]">{currentUser.name}</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Sign In (Gmail)</span>
-                  </>
+            {currentRole === 'admin' ? (
+              <>
+                {/* User Web Portal Link & Preview Control Pill */}
+                <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => onRoleChange('user')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#173D35] hover:bg-[#0F2D27] text-white shadow-2xs transition-all"
+                    title="Switch to User Web Portal view"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>User Portal</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyStudentLink}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ml-1 ${
+                      copiedLink
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-white text-emerald-800 hover:bg-emerald-50 border border-emerald-200/80 shadow-2xs'
+                    }`}
+                    title="Copy public web link to access the User Web Portal"
+                  >
+                    {copiedLink ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Copy className="w-3.5 h-3.5 text-emerald-600" />}
+                    <span className="hidden sm:inline">{copiedLink ? 'Copied!' : 'Copy Portal Link'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = getStudentPortalUrl();
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    }}
+                    className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-white rounded-lg transition-colors ml-0.5"
+                    title="Open User Web Portal in New Tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+
+                  {onOpenShareModal && (
+                    <button
+                      type="button"
+                      onClick={onOpenShareModal}
+                      className="p-1.5 text-slate-600 hover:text-emerald-700 hover:bg-white rounded-lg transition-colors"
+                      title="Generate custom web portal links & QR codes"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Admin Add Document button */}
+                <button
+                  id="btn-nav-add-doc"
+                  onClick={onOpenAddModal}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#173D35] hover:bg-[#0F2D27] text-white text-xs font-semibold shadow-xs transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>New Book</span>
+                </button>
+
+                {/* Reset sample seed button */}
+                <button
+                  id="btn-reset-seed"
+                  onClick={onResetSeed}
+                  disabled={isResetting}
+                  title="Reset to initial sample course data"
+                  className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
+                  <span>Reset</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Quick Share Link in User Portal */}
+                {onOpenShareModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenShareModal}
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors"
+                    title="Share this web portal link"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Share Portal</span>
+                  </button>
                 )}
-              </button>
+
+                {/* Switch to Admin Studio */}
+                <button
+                  type="button"
+                  onClick={() => onRoleChange('admin')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all"
+                  title="Switch to Admin Dashboard"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Admin Studio</span>
+                </button>
+              </>
             )}
-
-            {/* Reset sample seed button */}
-            <button
-              id="btn-reset-seed"
-              onClick={onResetSeed}
-              disabled={isResetting}
-              title="Reset to initial sample course data"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
-              <span className="hidden lg:inline">Reset Data</span>
-            </button>
-
-            {/* Admin Add Document button */}
-            {currentRole === 'admin' && (
-              <button
-                id="btn-nav-add-doc"
-                onClick={onOpenAddModal}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#173D35] hover:bg-[#0F2D27] text-white text-xs font-semibold shadow-sm transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New Book</span>
-              </button>
-            )}
-
-            {/* Role Switcher Pill */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-              <button
-                id="btn-role-user"
-                onClick={() => onRoleChange('user')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  currentRole === 'user'
-                    ? 'bg-white text-emerald-800 shadow-sm font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Student View</span>
-              </button>
-              <button
-                id="btn-role-admin"
-                onClick={() => onRoleChange('admin')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  currentRole === 'admin'
-                    ? 'bg-slate-900 text-white shadow-sm font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>Admin Studio</span>
-              </button>
-            </div>
 
           </div>
 

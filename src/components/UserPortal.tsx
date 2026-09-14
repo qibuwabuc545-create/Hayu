@@ -240,12 +240,17 @@ export const UserPortal: React.FC<UserPortalProps> = ({
           {/* Brand Logo Header & Close button */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-[#173D35] text-white flex items-center justify-center font-serif font-black text-sm">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#173D35] to-[#0F2D27] text-white flex items-center justify-center font-serif font-black text-sm shadow-xs">
                 B
               </div>
-              <h1 className="font-extrabold tracking-wider text-slate-900 text-sm sm:text-base uppercase">
-                The Books
-              </h1>
+              <div>
+                <h1 className="font-extrabold tracking-tight text-slate-900 text-sm sm:text-base leading-tight">
+                  The Books Hub
+                </h1>
+                <span className="inline-block text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/70 uppercase tracking-wider font-mono">
+                  User Web Portal
+                </span>
+              </div>
             </div>
 
             {/* Mobile close button for menu */}
@@ -440,24 +445,6 @@ export const UserPortal: React.FC<UserPortalProps> = ({
                 </div>
               </button>
 
-              {/* Admin Studio Quick Button */}
-              {onSwitchToAdmin && (
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onSwitchToAdmin();
-                  }}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors"
-                >
-                  <div className="w-7 h-7 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <div className="text-left flex-1">
-                    <div>Admin Studio</div>
-                    <div className="text-[10px] text-blue-400">Upload &amp; sequence</div>
-                  </div>
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -560,6 +547,19 @@ export const UserPortal: React.FC<UserPortalProps> = ({
 
             {/* Right Profile & Setting Shortcut */}
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Admin Studio switch button */}
+              {onSwitchToAdmin && (
+                <button
+                  type="button"
+                  onClick={onSwitchToAdmin}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white hover:bg-slate-800 text-xs font-bold shadow-sm transition-all border border-slate-700"
+                  title="Return to Admin Dashboard"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Admin Dashboard</span>
+                </button>
+              )}
+
               {/* Settings shortcut button */}
               <button
                 onClick={() => setActiveNav('setting')}

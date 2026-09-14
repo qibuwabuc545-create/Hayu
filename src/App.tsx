@@ -6,6 +6,7 @@ import { PDFViewerModal } from './components/PDFViewerModal';
 import { AddEditPDFModal } from './components/AddEditPDFModal';
 import { AuthModal } from './components/AuthModal';
 import { PaymentModal } from './components/PaymentModal';
+import { StudentLinkGeneratorModal } from './components/StudentLinkGeneratorModal';
 import { ToastContainer, ToastMessage } from './components/Toast';
 import {
   PDFPost,
@@ -16,8 +17,39 @@ import {
   PaymentOrder
 } from './types';
 
+// Helper to determine initial role based on URL query params or path
+function getInitialRole(): UserRole {
+  if (typeof window === 'undefined') return 'admin';
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const pathname = window.location.pathname.toLowerCase();
+
+    // Check if user came through a student link
+    const hasStudentParam =
+      params.get('view') === 'user' ||
+      params.get('view') === 'student' ||
+      params.get('portal') === 'user' ||
+      params.get('portal') === 'student' ||
+      params.get('mode') === 'user' ||
+      params.get('mode') === 'student' ||
+      params.has('book') ||
+      params.has('token') ||
+      params.has('ref') ||
+      params.has('course') ||
+      pathname.startsWith('/portal') ||
+      pathname.startsWith('/library') ||
+      pathname.startsWith('/student') ||
+      pathname.startsWith('/user');
+
+    return hasStudentParam ? 'user' : 'admin';
+  } catch {
+    return 'admin';
+  }
+}
+
 export default function App() {
-  const [role, setRole] = useState<UserRole>('user');
+  // DEFAULT TO ADMIN PAGE (Access User page only through generated links)
+  const [role, setRole] = useState<UserRole>(getInitialRole);
   const [userPdfs, setUserPdfs] = useState<PDFPost[]>([]);
   const [adminPdfs, setAdminPdfs] = useState<PDFPost[]>([]);
   const [analytics, setAnalytics] = useState<AggregatedCourseAnalytic[]>([]);
@@ -43,6 +75,8 @@ export default function App() {
   const [editingPdf, setEditingPdf] = useState<PDFPost | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [activePaymentPdf, setActivePaymentPdf] = useState<PDFPost | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
+  const [hasProcessedInitialParams, setHasProcessedInitialParams] = useState<boolean>(false);
 
   // Toasts
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -58,6 +92,32 @@ export default function App() {
   const removeToast = (id: string) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
+
+  // Sync role to URL params
+  const handleRoleChange = (newRole: UserRole) => {
+    setRole(newRole);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (newRole === 'user') {
+        url.searchParams.set('view', 'user');
+      } else {
+        url.searchParams.delete('view');
+        url.searchParams.delete('portal');
+        url.searchParams.delete('mode');
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  // Listen to popstate (back/forward)
+  useEffect(() => {
+    const handlePopState = () => {
+      const updatedRole = getInitialRole();
+      setRole(updatedRole);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Fetch student unlocked books & payment orders
   const fetchUserData = useCallback(async (user: UserProfile | null) => {
@@ -127,6 +187,29 @@ export default function App() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Handle deep-linked action parameters once PDFs are loaded
+  useEffect(() => {
+    if (hasProcessedInitialParams || userPdfs.length === 0) return;
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const targetBookId = params.get('book');
+    const action = params.get('action');
+
+    if (targetBookId) {
+      const matchingPdf = userPdfs.find(p => p._id === targetBookId);
+      if (matchingPdf) {
+        if (action === 'read') {
+          setActiveReaderPdf(matchingPdf);
+          addToast('info', 'Document Opened', `Reading "${matchingPdf.title}"`);
+        } else if (action === 'buy') {
+          setActivePaymentPdf(matchingPdf);
+        }
+      }
+    }
+    setHasProcessedInitialParams(true);
+  }, [userPdfs, hasProcessedInitialParams]);
 
   // When user profile changes, sync to storage and load access
   const handleUserAuthenticated = (user: UserProfile) => {
@@ -283,7 +366,7 @@ export default function App() {
       {/* Top Navigation */}
       <Navbar
         currentRole={role}
-        onRoleChange={setRole}
+        onRoleChange={handleRoleChange}
         totalPdfs={userPdfs.length}
         totalViews={detailedAnalytics?.totalViews ?? analytics.reduce((a, b) => a + b.totalViews, 0)}
         onOpenAddModal={() => {
@@ -294,6 +377,7 @@ export default function App() {
         isResetting={isResetting}
         currentUser={currentUser}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenShareModal={() => setIsShareModalOpen(true)}
       />
 
       {/* Main Content */}
@@ -304,7 +388,7 @@ export default function App() {
             isLoading={isLoading}
             onReadPDF={handleReadPDF}
             onRefresh={fetchData}
-            onSwitchToAdmin={() => setRole('admin')}
+            onSwitchToAdmin={() => handleRoleChange('admin')}
             currentUser={currentUser}
             unlockedPdfIds={unlockedPdfIds}
             userOrders={userOrders}
@@ -340,6 +424,7 @@ export default function App() {
             }}
             onRefresh={fetchData}
             onReadPDF={handleReadPDF}
+            onSwitchToUser={() => handleRoleChange('user')}
           />
         )}
       </main>
@@ -388,6 +473,14 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Global Student Link Generator Modal */}
+      <StudentLinkGeneratorModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        pdfs={adminPdfs}
+        onCopySuccess={(msg) => addToast('success', 'Link Copied', msg)}
+      />
 
       {/* Toast Feedback */}
       <ToastContainer toasts={toasts} onDismiss={removeToast} />

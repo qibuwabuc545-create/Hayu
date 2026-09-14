@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { db } from './server/store';
 
@@ -13,9 +14,21 @@ async function startServer() {
 
   // --- API Routes ---
 
-  // Health check
+  // Health check & App Info
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  app.get('/api/app-info', (req, res) => {
+    const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
+    const baseUrl = `${protocol}://${host}`;
+    res.json({
+      baseUrl,
+      host,
+      devUrl: 'https://ais-dev-gbtuv7c64iysiyr5e3awvh-211354663705.europe-west2.run.app',
+      preUrl: 'https://ais-pre-gbtuv7c64iysiyr5e3awvh-211354663705.europe-west2.run.app'
+    });
   });
 
   // --- Authentication & User Routes ---
@@ -458,6 +471,23 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+
+    // Development SPA HTML fallback
+    app.use('*', async (req, res, next) => {
+      if (req.originalUrl.startsWith('/api')) {
+        return next();
+      }
+      try {
+        const url = req.originalUrl;
+        const indexPath = path.resolve(process.cwd(), 'index.html');
+        let template = fs.readFileSync(indexPath, 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e: any) {
+        vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));

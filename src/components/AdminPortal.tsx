@@ -33,7 +33,10 @@ import {
   ShieldCheck,
   Building2,
   DollarSign,
-  CreditCard
+  CreditCard,
+  Link as LinkIcon,
+  Share2,
+  ExternalLink
 } from 'lucide-react';
 import {
   BarChart,
@@ -57,6 +60,8 @@ import {
 import { BookCover } from './BookCover';
 import { AdminPaymentsManager } from './AdminPaymentsManager';
 import { AdminPaymentSettings } from './AdminPaymentSettings';
+import { AdminStudentLinks } from './AdminStudentLinks';
+import { StudentLinkGeneratorModal, getStudentPortalUrl } from './StudentLinkGeneratorModal';
 
 interface AdminPortalProps {
   pdfs: PDFPost[];
@@ -70,6 +75,7 @@ interface AdminPortalProps {
   onSimulateView: (pdfId: string) => Promise<void>;
   onRefresh: () => void;
   onReadPDF?: (pdf: PDFPost) => void;
+  onSwitchToUser?: () => void;
 }
 
 const COLORS = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#4f46e5'];
@@ -85,7 +91,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   onOpenAddModal,
   onSimulateView,
   onRefresh,
-  onReadPDF
+  onReadPDF,
+  onSwitchToUser
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('reorder');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -95,6 +102,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [adminDeptFilter, setAdminDeptFilter] = useState('ALL');
   const [isSimulatingTraffic, setIsSimulatingTraffic] = useState(false);
   const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
+  const [copiedRowLink, setCopiedRowLink] = useState<string | null>(null);
+
+  // Link Generator Modal State
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState<boolean>(false);
+  const [linkModalPdf, setLinkModalPdf] = useState<PDFPost | null>(null);
 
   // API Tester State
   const [apiEndpoint, setApiEndpoint] = useState<string>('/api/user/pdfs');
@@ -272,6 +284,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
         {/* Action button */}
         <div className="flex items-center gap-2.5">
           <button
+            onClick={() => {
+              setLinkModalPdf(null);
+              setIsLinkModalOpen(true);
+            }}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all hover:scale-102"
+            title="Generate Student Access Links and QR codes"
+          >
+            <LinkIcon className="w-4 h-4" />
+            <span>Student Links</span>
+          </button>
+
+          <button
             onClick={onOpenAddModal}
             className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
           >
@@ -297,6 +321,22 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             <span>Document Catalog</span>
             <span className="bg-slate-200 text-slate-700 text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold">
               {pdfs.length}
+            </span>
+          </button>
+
+          <button
+            id="admin-tab-links"
+            onClick={() => setActiveTab('links')}
+            className={`flex items-center gap-2 py-3 px-3 sm:px-3.5 text-xs sm:text-sm font-bold border-b-2 transition-all ${
+              activeTab === 'links'
+                ? 'border-emerald-600 text-emerald-700 bg-emerald-50/50 rounded-t-lg'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <LinkIcon className="w-4 h-4 text-emerald-600" />
+            <span>Student Access Links</span>
+            <span className="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold">
+              Share Hub
             </span>
           </button>
 
@@ -524,6 +564,29 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                       </button>
                     </div>
 
+                    {/* Copy Direct Student Access Link */}
+                    <button
+                      onClick={() => {
+                        const url = getStudentPortalUrl({ bookId: pdf._id });
+                        navigator.clipboard.writeText(url);
+                        setCopiedRowLink(pdf._id);
+                        setTimeout(() => setCopiedRowLink(null), 2500);
+                      }}
+                      title="Copy direct student access link for this document"
+                      className={`p-1.5 text-xs rounded-lg border flex items-center gap-1 font-semibold transition-all ${
+                        copiedRowLink === pdf._id
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                          : 'bg-emerald-50/60 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                      }`}
+                    >
+                      {copiedRowLink === pdf._id ? (
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      ) : (
+                        <LinkIcon className="w-3.5 h-3.5 text-emerald-600" />
+                      )}
+                      <span className="hidden sm:inline text-[11px]">{copiedRowLink === pdf._id ? 'Copied' : 'Student Link'}</span>
+                    </button>
+
                     {/* Read / Preview In-App */}
                     {onReadPDF && (
                       <button
@@ -584,6 +647,19 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
             })}
           </div>
         </div>
+      )}
+
+      {/* TAB: STUDENT ACCESS LINKS & SHARING HUB */}
+      {activeTab === 'links' && (
+        <AdminStudentLinks
+          pdfs={pdfs}
+          onOpenGenerateModal={(pdf) => {
+            setLinkModalPdf(pdf || null);
+            setIsLinkModalOpen(true);
+          }}
+          onReadPDF={onReadPDF}
+          onSwitchToUser={onSwitchToUser}
+        />
       )}
 
       {/* TAB: STUDENT PAYMENTS & ORDERS */}
@@ -970,6 +1046,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
 
         </div>
       )}
+
+      {/* Student Web Access Link Generator Modal */}
+      <StudentLinkGeneratorModal
+        isOpen={isLinkModalOpen}
+        onClose={() => {
+          setIsLinkModalOpen(false);
+          setLinkModalPdf(null);
+        }}
+        pdfs={pdfs}
+        initialPdf={linkModalPdf}
+      />
 
     </div>
   );
